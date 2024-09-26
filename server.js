@@ -36,7 +36,7 @@ const server = net.createServer((socket) => {
 
       socket.write(
         `Hi, `.cyan +
-          colors[color](`${username}`) +
+          colors[color](username) +
           `! You can start chatting now. Type `.cyan +
           `exit`.red +
           ` to leave.\n`.cyan
@@ -44,24 +44,24 @@ const server = net.createServer((socket) => {
 
       clients.push({ socket, username, color });
 
-      broadcast(colors[color](`${username}`) + ` hopped on!`, socket);
+      broadcast(colors[color](username) + ` hopped on!`, socket);
     } else {
       if (message.toLowerCase() === "exit") {
         socket.end("kthxbye!\n".cyan);
         return;
       }
 
-      broadcast(colors[color](`${username}`) + `: ${message}`, socket);
+      broadcast(colors[color](username) + `: ${message}`, socket);
     }
   });
 
   socket.on("end", () => {
-    // console.log(colors[color](`${username}`) + ` disconnected`);
+    // console.log(colors[color](username) + ` disconnected`);
     console.log(`${username} disconnected`);
 
     clients = clients.filter((client) => client.socket !== socket);
 
-    broadcast(colors[color](`${username}`) + ` dipped.`, socket);
+    broadcast(colors[color](username) + ` dipped.`, socket);
   });
 
   socket.on("error", (err) => {
