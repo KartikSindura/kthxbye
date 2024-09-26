@@ -1,67 +1,76 @@
 import net from "net";
-import colors from "colors";
+import colors from "colors"; // Using the 'safe' version
 
 let clients = [];
-let colors_arr = [
+const colors_arr = [
   "bgRed",
   "bgYellow",
   "bgBlue",
   "bgMagenta",
-  //   "bgCyan",
   "bgGray",
   "bgGrey",
 ];
 
+// Helper function to get a random color
 function getRandomColor() {
-  const ind = Math.floor(Math.random() * colors_arr.length);
-  return colors_arr[ind];
+  const index = Math.floor(Math.random() * colors_arr.length);
+  return colors_arr[index];
 }
 
 const server = net.createServer((socket) => {
-  console.log("New client connected".cyan);
+  console.log(colors.cyan("New client connected"));
 
-  socket.write("Welcome to the chat room!\nEnter your username: ".cyan);
+  // Prompt for username on connection
+  socket.write(colors.cyan("Welcome to the chat room!\nEnter your username: "));
 
   let username = "";
   let color = "";
 
   socket.on("data", (data) => {
     const message = data.toString().trim();
-    if (message == "" && username) {
-      return;
-    }
+
     if (!username) {
-      message == "" ? (username = "anon") : (username = message);
-      color = getRandomColor();
+      // First input is treated as the username
+      username = message === "" ? "anon" : message;
+      color = getRandomColor(); // Assign random color
 
-      socket.write(
-        `Hi, `.cyan +
-          colors[color](username) +
-          `! You can start chatting now. Type `.cyan +
-          `exit`.red +
-          ` to leave.\n`.cyan
-      );
+      // Check if the color function exists in 'colors'
+      if (typeof colors[color] === "function") {
+        socket.write(
+          colors.cyan("Hi, ") +
+            colors[color](username) + // Apply the random color to the username
+            colors.cyan("! You can start chatting now. Type ") +
+            colors.red("exit") +
+            colors.cyan(" to leave.\n")
+        );
 
-      clients.push({ socket, username, color });
+        clients.push({ socket, username, color });
 
-      broadcast(colors[color](username) + ` hopped on!`, socket);
+        // Broadcast that the user joined
+        broadcast(colors[color](username) + " hopped on!", socket);
+      } else {
+        socket.write("Error: Invalid color assignment.\n".red);
+      }
     } else {
+      // Handle user messages
       if (message.toLowerCase() === "exit") {
-        socket.end("kthxbye!\n".cyan);
+        socket.end(colors.cyan("kthxbye!\n"));
         return;
       }
 
+      // Broadcast the message to all other clients
       broadcast(colors[color](username) + `: ${message}`, socket);
     }
   });
 
   socket.on("end", () => {
-    // console.log(colors[color](username) + ` disconnected`);
     console.log(`${username} disconnected`);
 
+    // Remove the client from the list
     clients = clients.filter((client) => client.socket !== socket);
 
-    broadcast(colors[color](username) + ` dipped.`, socket);
+    // Broadcast the user's disconnection
+    broadcast(colors[color](username) + " dipped.", socket);
   });
 
   socket.on("error", (err) => {
@@ -69,6 +78,7 @@ const server = net.createServer((socket) => {
   });
 });
 
+// Function to broadcast messages to all clients except the sender
 function broadcast(message, senderSocket) {
   clients.forEach((client) => {
     if (client.socket !== senderSocket) {
@@ -77,6 +87,7 @@ function broadcast(message, senderSocket) {
   });
 }
 
+// Start the server on port 3000
 server.listen(3000, () => {
   console.log("Server running on port 3000");
 });
