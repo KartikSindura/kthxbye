@@ -56,7 +56,8 @@ const server = net.createServer((socket) => {
   });
 
   socket.on("end", () => {
-    console.log(colors[color](`${username}`) + ` disconnected`);
+    // console.log(colors[color](`${username}`) + ` disconnected`);
+    console.log(`${username} disconnected`);
 
     clients = clients.filter((client) => client.socket !== socket);
 
